@@ -19,3 +19,4 @@ cloudpickle==3.1.2
 colorama==0.4.6
 coloredlogs==15.0.1
 mediapipe>=0.10.30
+yt_dlp
