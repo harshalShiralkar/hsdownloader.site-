@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- Primary SEO Meta Tags -->
+<title>HSdownloder - Free YouTube Video & MP3 Downloader | Fast & HD Quality</title>
+<meta name="title" content="HSdownloder - Free YouTube Video & MP3 Downloader | Fast & HD Quality">
+<meta name="description" content="HSdownloder is a fast, free YouTube video and audio downloader college project created by Harshal Shiralkar. Convert and download YouTube videos to MP4 and MP3 in 1080p Full HD, 720p, and 320kbps audio.">
+<meta name="keywords" content="YouTube downloader, YouTube to MP3, YouTube to MP4, free video downloader, download YouTube videos, online video converter, 1080p video downloader, HD video saver, fast audio converter, YouTube MP3 downloader, HSdownloder, Harshal Shiralkar college project">
+<meta name="robots" content="index, follow">
+<meta name="author" content="Harshal Shiralkar">
+
+<!-- Open Graph / Facebook / WhatsApp SEO -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hsdownloader.com/">
+<meta property="og:title" content="HSdownloder - Fast YouTube Video & MP3 Downloader">
+<meta property="og:description" content="Download authorized YouTube videos and audio easily in 1080p HD or 320kbps MP3. A clean full-stack web project by Harshal Shiralkar.">
+<meta property="og:image" content="https://hsdownloader.com/og-image.png">
+
+<!-- Twitter Cards -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:title" content="HSdownloder - YouTube Video & Audio Downloader">
+<meta property="twitter:description" content="Convert YouTube videos to MP4 and MP3 instantly with fast speed and clean UI.">
+
+<!-- Structured Data (JSON-LD) for Search Engine Ranking -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "HSdownloder",
+  "alternateName": ["HS Downloader", "HS YouTube Downloader"],
+  "url": "https://hsdownloader.com",
+  "description": "Free web utility application to fetch, convert, and download YouTube videos and audio in high-definition formats.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "All",
+  "author": {
+    "@type": "Person",
+    "name": "Harshal Shiralkar",
+    "email": "harshalshiralkar9@gmail.com"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+
+<!-- Tab Favicon / Logo -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23ff2a40'/><text x='50%' y='65%' font-size='50' font-weight='900' font-family='system-ui, sans-serif' fill='%23ffffff' text-anchor='middle'>HS</text></svg>">
+
+<style>
+:root {
+  --bg: #070709;
+  --panel: #111116;
+  --panel-hover: #16161d;
+  --text: #f3f3f6;
+  --muted: #9494a0;
+  --accent: #ff2a40;
+  --accent-glow: rgba(255, 42, 64, 0.25);
+  --border: #1f1f2b;
+  --border-glow: #38384d;
+  --radius: 18px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: radial-gradient(circle at 50% -20%, #220c12 0%, var(--bg) 55%), var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+a { color: #ff808d; text-decoration: none; transition: color .2s; }
+a:hover { color: var(--accent); text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* Sticky Glass Header */
+header {
+  position: sticky; top: 0; z-index: 1000;
+  background: rgba(7, 7, 9, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.bar {
+  max-width: 1100px; margin: auto;
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.logo { font-size: 20px; font-weight: 800; letter-spacing: -.5px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.logo-icon { 
+  width: 34px; height: 34px; background: linear-gradient(135deg, var(--accent), #ff6b7b); 
+  border-radius: 10px; display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 15px;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+.logo span { color: var(--accent); }
+
+nav { display: flex; gap: 16px; flex-wrap: wrap; }
+nav a { color: var(--muted); font-size: 14px; font-weight: 500; }
+nav a:hover { color: var(--text); text-decoration: none; }
+
+/* Main Layout Wrapper */
+main { 
+  max-width: 1060px; width: 100%; margin: auto; 
+  padding: 30px 16px 60px; flex: 1;
+}
+
+.hero { text-align: center; margin-bottom: 30px; }
+h1 {
+  font-size: clamp(26px, 5vw, 48px);
+  line-height: 1.15; letter-spacing: -.03em;
+  margin: 0 0 10px;
+}
+.hero p { color: var(--muted); max-width: 600px; margin: auto; font-size: 15px; padding: 0 10px; }
+
+/* Downloader Panel Box */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: clamp(20px, 4vw, 36px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.panel::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 42, 64, 0.4), transparent);
+}
+
+.label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.05em; }
+.url-row { display: flex; gap: 12px; flex-direction: column; }
+@media (min-width: 640px) {
+  .url-row { flex-direction: row; }
+}
+
+input {
+  flex: 1; width: 100%; min-width: 0;
+  background: #040405; border: 1px solid var(--border); color: #fff;
+  padding: 14px 16px; border-radius: 14px; font: inherit; font-size: 15px;
+  transition: all .2s;
+}
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); outline: none; }
+
+button { font: inherit; cursor: pointer; border: 0; transition: all .2s; }
+.primary {
+  background: var(--accent); color: #fff;
+  padding: 0 24px; min-height: 50px; border-radius: 14px;
+  font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  width: 100%;
+}
+@media (min-width: 640px) {
+  .primary { width: auto; }
+}
+.primary:hover { background: #e02337; transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+.primary:active { transform: translateY(0); }
+.primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.secondary-btn {
+  background: #252533; color: #fff; padding: 0 20px; min-height: 50px; border-radius: 14px;
+  font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  display: none; width: 100%;
+}
+@media (min-width: 640px) {
+  .secondary-btn { width: auto; }
+}
+.secondary-btn:hover { background: #323246; }
+
+.note { color: var(--muted); font-size: 12px; margin: 12px 0 0; }
+#status { margin-top: 16px; font-size: 14px; min-height: 1.4em; font-weight: 500; word-break: break-word; }
+#status.error { color: #ff808d; }
+
+/* Persistent In-Panel Download Notice Banner */
+#download-banner {
+  background: linear-gradient(135deg, #1f1116, #181822);
+  border: 1px solid var(--accent);
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-top: 16px;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.banner-icon {
+  width: 24px; height: 24px; background: var(--accent); border-radius: 50%;
+  display: grid; place-items: center; color: #fff; font-size: 12px; flex-shrink: 0;
+}
+
+/* Extra Large Timer HUD Display */
+.download-hud { justify-content: flex-end; align-items: center; margin-top: 16px; display: none; }
+.timer-badge-large { 
+  background: #15151c; padding: 10px 16px; border-radius: 14px; font-size: 18px; font-weight: 800; color: #f3f3f6; border: 1px solid var(--border);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4); display: inline-flex; align-items: center; gap: 8px; width: 100%; justify-content: center;
+}
+@media (min-width: 480px) {
+  .timer-badge-large { width: auto; font-size: 20px; padding: 12px 20px; }
+}
+
+/* Progress Bar */
+.progress-container { width: 100%; height: 8px; background: #181822; border-radius: 4px; overflow: hidden; margin-top: 12px; display: none; }
+.progress-bar { 
+  width: 100%; height: 100%; background: linear-gradient(90deg, var(--accent), #ff808d, var(--accent)); 
+  background-size: 200% 100%; border-radius: 4px; animation: pulseBar 2s linear infinite; 
+}
+@keyframes pulseBar {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Options Area */
+.options { display: none; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px; }
+.options.show { display: block; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.options h2 { font-size: 13px; margin: 0 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 20px; }
+@media (min-width: 560px) {
+  .grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+}
+.option {
+  text-align: left; padding: 12px 14px; border-radius: 12px;
+  background: #15151c; border: 1px solid var(--border); color: #fff;
+  cursor: pointer; transition: all .2s;
+}
+.option:hover { border-color: var(--border-glow); background: var(--panel-hover); }
+.option.selected { border-color: var(--accent); background: #261116; box-shadow: 0 0 0 1px var(--accent); }
+.option strong { display: block; font-size: 14px; margin-bottom: 2px; }
+.option small { color: var(--muted); font-size: 11px; }
+
+.action-row { display: flex; align-items: center; gap: 10px; flex-direction: column; }
+@media (min-width: 640px) {
+  .action-row { flex-direction: row; }
+}
+.action-row .primary { width: 100%; }
+
+/* Stylish Minimal Bento Grid Boxes */
+.box-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+@media (min-width: 768px) {
+  .box-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+.info-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: border-color .2s, transform .2s;
+}
+@media (min-width: 640px) {
+  .info-box { padding: 30px; }
+}
+.info-box:hover { border-color: #2e2e40; }
+.info-box h2 { font-size: 18px; margin: 0 0 12px; letter-spacing: -.01em; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.info-box p, .info-box li { color: var(--muted); font-size: 14px; line-height: 1.6; word-break: break-word; }
+.info-box ul, .info-box ol { padding-left: 18px; margin: 10px 0; }
+.info-box .updated { font-size: 11px; color: #6e6e7c; margin-bottom: 12px; display: block; text-transform: uppercase; letter-spacing: .05em; }
+
+/* Keywords Tag Section for Extra SEO Ranking */
+.seo-tags {
+  margin-top: 30px;
+  text-align: center;
+  color: #555566;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.seo-tags span {
+  display: inline-block;
+  background: #0f0f15;
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin: 3px;
+  border: 1px solid #1a1a24;
+}
+
+/* Loading Spinner */
+.spinner {
+  width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,0.3);
+  border-radius: 50%; border-top-color: #fff; animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Footer */
+footer {
+  margin-top: auto; border-top: 1px solid var(--border);
+  padding: 28px 16px; text-align: center; color: var(--muted); font-size: 13px;
+  background: rgba(4, 4, 5, 0.4);
+}
+footer .footer-links { display: flex; justify-content: center; gap: 16px; margin: 12px 0; flex-wrap: wrap; }
+footer a { color: var(--muted); }
+footer a:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <a class="logo" href="#top"><div class="logo-icon">HS</div>HS<span>downloder</span></a>
+    <nav aria-label="Main Navigation">
+      <a href="#how">How to use</a>
+      <a href="#about">About</a>
+      <a href="#terms">Terms</a>
+      <a href="#privacy">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <h1>YouTube Video & Audio Downloader</h1>
+    <p>The fastest free online tool to convert and download YouTube videos to MP4 and MP3 audio in 1080p Full HD quality seamlessly.</p>
+  </section>
+
+  <!-- Downloader Box -->
+  <section class="panel" aria-label="YouTube Media Downloader Panel">
+    <label class="label" for="url">Paste YouTube Video or Audio URL</label>
+    <div class="url-row">
+      <input id="url" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="url">
+      <button class="primary" id="go">Fetch Options</button>
+    </div>
+    <p class="note">Only use links for public domain videos or content you own and have explicit permission to download.</p>
+    
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <!-- Dynamic Download Notice Banner -->
+    <div id="download-banner">
+      <div class="banner-icon"><span class="spinner" style="width:12px;height:12px;border-width:2px;"></span></div>
+      <div id="bannerText">Your video is getting downloaded, please wait...</div>
+    </div>
+
+    <!-- Extra Large Timer HUD Display -->
+    <div class="download-hud" id="downloadHud">
+      <div class="timer-badge-large">⏱️ <span id="timeCount">0.0</span>s Downloading </div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar"></div>
+    </div>
+
+    <div class="options" id="options">
+      <h2>Select Format (MP4 Video / MP3 Audio)</h2>
+      <div class="grid" id="formats">
+        <button class="option selected" data-format="mp4"><strong>Video MP4</strong><small>Standard HD Video</small></button>
+        <button class="option" data-format="mp3"><strong>Audio MP3</strong><small>High Quality Audio</small></button>
+      </div>
+      <h2 id="qualityTitle">Video Quality (1080p, 720p, 480p)</h2>
+      <div class="grid" id="qualities"></div>
+      <div class="action-row">
+        <button class="primary" id="confirm">Download File</button>
+        <button class="secondary-btn" id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bento Grid Boxes -->
+  <div class="box-grid">
+    <section class="info-box" id="how">
+      <h2>How to Download YouTube Videos & MP3 Audio</h2>
+      <ol>
+        <li><strong>Step 1:</strong> Copy the video or audio web address (URL) from YouTube or supported platforms.</li>
+        <li><strong>Step 2:</strong> Paste the copied video link into the URL input box above.</li>
+        <li><strong>Step 3:</strong> Click <strong>"Fetch Options"</strong> to display supported HD formats and bitrates.</li>
+        <li><strong>Step 4:</strong> Select either <strong>Video MP4 (1080p/720p)</strong> or <strong>Audio MP3 (320kbps)</strong>.</li>
+        <li><strong>Step 5:</strong> Click <strong>"Download File"</strong> to convert and save high-speed media to your mobile or PC.</li>
+      </ol>
+    </section>
+
+    <section class="info-box" id="about">
+      <h2>About HSdownloder Project</h2>
+      <p>HSdownloder is developed proudly as a full-stack web development <strong>college project</strong> by <strong>Harshal Shiralkar</strong>.</p>
+      <p>This web application showcases high-performance backend integration using Python, FastAPI, and responsive frontend UI architecture for seamless YouTube media handling.</p>
+    </section>
+
+    <section class="info-box" id="terms">
+      <h2>Terms & Project Guidelines</h2>
+      <span class="updated">Usage Rules & Compliance</span>
+      <ol>
+        <li><strong>Academic Purpose:</strong> Built strictly for educational demonstration, university evaluation, and portfolio showcasing.</li>
+        <li><strong>Authorized Content Only:</strong> Users must download public domain videos or media for which they hold rights.</li>
+        <li><strong>No Misuse:</strong> The developer takes no responsibility for copyrighted material or commercial infringement.</li>
+      </ol>
+    </section>
+
+    <section class="info-box" id="privacy">
+      <h2>Privacy Policy & Support</h2>
+      <span class="updated">Data Security & Help</span>
+      <p>Your privacy is 100% safe. URLs submitted to HSdownloder are processed ephemerally and never permanently logged.</p>
+      <p><strong>Contact Developer:</strong> <br><a href="mailto:harshalshiralkar9@gmail.com"><strong>harshalshiralkar9@gmail.com</strong></a></p>
+    </section>
+  </div>
+
+  <!-- Search Engine Keyword Tag Cloud -->
+  <div class="seo-tags" aria-hidden="true">
+    <span>YouTube Downloader</span>
+   <span>free youtube downloader</span>
+    <span>YouTube to MP3</span>
+    <span>Convert YouTube to MP4</span>
+    <span>Free Video Converter</span>
+    <span>1080p HD Downloader</span>
+    <span>320kbps Audio Extractor</span>
+    <span>Fast Media Downloader</span>
+    <span>youtube to mp3 converter</span>
+    <span>youtube downloader for android</span>
+    <span>youtube downloader for mac</span>
+
+
+  </div>
+</main>
+
+<footer>
+  <div>&copy; <span id="year"></span> HSdownloder &bull; Created as a College Project by Harshal Shiralkar.</div>
+  <div class="footer-links">
+    <a href="#how">How to use</a>
+    <a href="#about">About</a>
+    <a href="#terms">Terms</a>
+    <a href="#privacy">Privacy</a>
+  </div>
+  <div>All rights reserved.</div>
+</footer>
+
+<script>
+const urlInput = document.getElementById("url");
+const statusBox = document.getElementById("status");
+const downloadHud = document.getElementById("downloadHud");
+const timeCount = document.getElementById("timeCount");
+const options = document.getElementById("options");
+const qualities = document.getElementById("qualities");
+const qualityTitle = document.getElementById("qualityTitle");
+const confirmBtn = document.getElementById("confirm");
+const cancelBtn = document.getElementById("cancelBtn");
+const goBtn = document.getElementById("go");
+const progressContainer = document.getElementById("progressContainer");
+const downloadBanner = document.getElementById("download-banner");
+const bannerText = document.getElementById("bannerText");
+
+let format = "mp4";
+let quality = "1080p";
+let currentAbortController = null;
+let timerInterval = null;
+let startTime = 0;
+
+const CHOICES = {
+  mp4: [["1080p", "Full HD Video"], ["720p", "HD Quality"], ["480p", "SD Standard"], ["360p", "Low Bandwidth"]],
+  mp3: [["320 kbps", "Ultra Audio Quality"], ["192 kbps", "Standard Audio"], ["128 kbps", "Compact MP3"], ["96 kbps", "Low Bitrate"]]
+};
+
+document.getElementById("year").textContent = new Date().getFullYear();
+
+function setStatus(text, isError) {
+  statusBox.textContent = text;
+  statusBox.classList.toggle("error", !!isError);
+}
+
+function startTimer() {
+  startTime = performance.now();
+  downloadHud.style.display = "flex";
+  downloadBanner.style.display = "flex";
+  
+  if (format === "mp3") {
+    bannerText.textContent = "Your audio is getting downloaded, please wait...";
+  } else {
+    bannerText.textContent = "Your video is getting downloaded, please wait...";
+  }
+
+  timeCount.textContent = "0.0";
+  
+  timerInterval = setInterval(() => {
+    const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+    timeCount.textContent = elapsed;
+  }, 100);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  downloadBanner.style.display = "none";
+}
+
+function renderQualities() {
+  qualityTitle.textContent = format === "mp3" ? "Audio Bitrate (MP3)" : "Video Quality (MP4)";
+  qualities.innerHTML = CHOICES[format].map(([value, desc], i) =>
+    `<button class="option${i === 0 ? " selected" : ""}" data-quality="${value}"><strong>${value}</strong><small>${desc}</small></button>`
+  ).join("");
+  quality = CHOICES[format][0][0];
+}
+
+function hideOptions() { options.classList.remove("show"); }
+
+goBtn.addEventListener("click", () => {
+  const raw = urlInput.value.trim();
+  if (!raw) { setStatus("Please paste a URL first.", true); hideOptions(); urlInput.focus(); return; }
+  let parsed;
+  try { parsed = new URL(raw); } catch { setStatus("Enter a valid URL including https://", true); hideOptions(); return; }
+  if (!["http:", "https:"].includes(parsed.protocol)) { setStatus("Only HTTP and HTTPS URLs are supported.", true); hideOptions(); return; }
+  setStatus("URL accepted. Select your format and quality below.");
+  options.classList.add("show");
+});
+
+urlInput.addEventListener("input", () => { hideOptions(); setStatus(""); downloadHud.style.display = "none"; downloadBanner.style.display = "none"; });
+urlInput.addEventListener("keydown", e => { if (e.key === "Enter") goBtn.click(); });
+
+document.getElementById("formats").addEventListener("click", e => {
+  const btn = e.target.closest("[data-format]");
+  if (!btn) return;
+  format = btn.dataset.format;
+  document.querySelectorAll("[data-format]").forEach(b => b.classList.toggle("selected", b === btn));
+  renderQualities();
+});
+
+qualities.addEventListener("click", e => {
+  const btn = e.target.closest("[data-quality]");
+  if (!btn) return;
+  quality = btn.dataset.quality;
+  qualities.querySelectorAll("[data-quality]").forEach(b => b.classList.toggle("selected", b === btn));
+});
+
+confirmBtn.addEventListener("click", async () => {
+  const rawUrl = urlInput.value.trim();
+  if (!rawUrl) { setStatus("Please enter a URL.", true); return; }
+  
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = '<span class="spinner"></span> Processing...';
+  cancelBtn.style.display = "inline-flex";
+  setStatus(`Processing ${format.toUpperCase()} at ${quality}...`);
+  
+  progressContainer.style.display = "block";
+
+  startTimer();
+  currentAbortController = new AbortController();
+
+  try {
+    const response = await fetch("http://localhost:8000/api/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: rawUrl, format: format, quality: quality }),
+      signal: currentAbortController.signal
+    });
+
+    if (!response.ok) {
+      let errorMsg = "Download failed";
+      try {
+        const errData = await response.json();
+        errorMsg = errData.detail || errorMsg;
+      } catch (e) {
+        errorMsg = await response.text() || errorMsg;
+      }
+      throw new Error(errorMsg);
+    }
+
+    stopTimer();
+    const finalTime = timeCount.textContent;
+    setStatus(`Download completed successfully in ${finalTime}s!`);
+
+    const blob = await response.blob();
+    let fileName = `hs download.${format === "mp3" ? "mp3" : "mp4"}`;
+    const disposition = response.headers.get("content-disposition");
+    if (disposition && disposition.includes("filename=")) {
+      const match = disposition.match(/filename\*?=['"]?(?:UTF-8'')?([^'";]+)['"]?/i);
+      if (match && match[1]) fileName = decodeURIComponent(match[1]);
+    }
+
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+  } catch (error) {
+    stopTimer();
+    if (error.name === 'AbortError') {
+      setStatus("Download cancelled by user.", true);
+    } else {
+      setStatus(`Error: ${error.message}`, true);
+    }
+    progressContainer.style.display = "none";
+    downloadHud.style.display = "none";
+    downloadBanner.style.display = "none";
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = 'Download File';
+    cancelBtn.style.display = "none";
+    currentAbortController = null;
+    setTimeout(() => {
+      progressContainer.style.display = "none";
+      downloadHud.style.display = "none";
+      downloadBanner.style.display = "none";
+    }, 4000);
+  }
+});
+
+cancelBtn.addEventListener("click", () => {
+  if (currentAbortController) currentAbortController.abort();
+});
+
+renderQualities();
+</script>
+</body>
+</html>
