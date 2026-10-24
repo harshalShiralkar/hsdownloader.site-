@@ -105,10 +105,10 @@ def build_ydl_opts(req, temp_dir, use_cookies, stop_event, selector):
         "windowsfilenames": True,
         "progress_hooks": [progress_hook],
         "format": selector,
-        # Fix for cloud server format blocks and signature restrictions
+        # Player client configuration for handling cloud IP restrictions
         "extractor_args": {
             "youtube": {
-                "player-client": ["web", "android"]
+                "player-client": ["ios", "android", "web"]
             }
         },
     }
