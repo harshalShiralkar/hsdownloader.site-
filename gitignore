@@ -1,0 +1,5 @@
+cookies.txt
+.deno/
+__pycache__/
+*.pyc
+.env
