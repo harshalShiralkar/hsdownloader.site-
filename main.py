@@ -1,4 +1,3 @@
-
 import os
 import re
 import shutil
@@ -107,19 +106,12 @@ def build_ydl_opts(req, temp_dir, use_cookies, stop_event, selector):
         "format": selector,
     }
 
-    # Use an explicit cookie file when one is provided.
     if COOKIES_PATH.is_file():
         cookie_copy = os.path.join(temp_dir, "cookies.txt")
         shutil.copyfile(COOKIES_PATH, cookie_copy)
         opts["cookiefile"] = cookie_copy
     elif use_cookies:
         opts["cookiesfrombrowser"] = (COOKIE_BROWSER,)
-
-    # Do not force old YouTube clients. Allow yt-dlp to choose compatible
-    # clients unless you specifically need a client workaround.
-    #
-    # If the "page needs to be reloaded" error persists, update yt-dlp
-    # first, then test a supported client configuration separately.
 
     ffmpeg_path = get_ffmpeg_path()
     if ffmpeg_path:
@@ -262,7 +254,6 @@ async def download_media(
                         exc,
                     )
 
-                    # Format-related errors may succeed with another selector.
                     format_error = any(term in message for term in (
                         "requested format is not available",
                         "no video formats found",
@@ -270,8 +261,6 @@ async def download_media(
                         "no formats found",
                     ))
 
-                    # Avoid repeated retries for authentication, network,
-                    # unavailable video, or unrelated failures.
                     if format_error:
                         continue
 
@@ -366,12 +355,14 @@ async def download_media(
     )
 
 
+# --- RENDER DEPLOYMENT CONFIGURATION ---
 if __name__ == "__main__":
     import uvicorn
 
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(
         "main:app",
-        host="127.0.0.1",
-        port=8000,
-        reload=True,
+        host="0.0.0.0",
+        port=port,
+        reload=False,
     )
