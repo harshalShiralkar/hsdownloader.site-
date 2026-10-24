@@ -22,3 +22,4 @@ mediapipe>=0.10.30
 yt_dlp
 fastapi
 uvicorn
+imageio_ffmpeg
