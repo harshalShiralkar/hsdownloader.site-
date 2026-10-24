@@ -415,7 +415,7 @@ footer a:hover { color: var(--text); }
   <!-- Search Engine Keyword Tag Cloud -->
   <div class="seo-tags" aria-hidden="true">
     <span>YouTube Downloader</span>
-   <span>free youtube downloader</span>
+    <span>free youtube downloader</span>
     <span>YouTube to MP3</span>
     <span>Convert YouTube to MP4</span>
     <span>Free Video Converter</span>
@@ -425,8 +425,6 @@ footer a:hover { color: var(--text); }
     <span>youtube to mp3 converter</span>
     <span>youtube downloader for android</span>
     <span>youtube downloader for mac</span>
-
-
   </div>
 </main>
 
@@ -551,7 +549,8 @@ confirmBtn.addEventListener("click", async () => {
   currentAbortController = new AbortController();
 
   try {
-    const response = await fetch("http://localhost:8000/api/download", {
+    // FIXED: Using relative path so it works across PC, mobile, and Render deployment automatically
+    const response = await fetch("/api/download", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: rawUrl, format: format, quality: quality }),
