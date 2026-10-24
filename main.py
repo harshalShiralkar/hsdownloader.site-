@@ -75,7 +75,6 @@ def build_selectors(req):
 
     height = get_video_height(req.quality)
 
-    # Updated with resilient fallbacks to prevent format errors
     return [
         f"bestvideo[height<={height}]+bestaudio/"
         f"best[height<={height}]/bestvideo+bestaudio/best",
@@ -106,6 +105,12 @@ def build_ydl_opts(req, temp_dir, use_cookies, stop_event, selector):
         "windowsfilenames": True,
         "progress_hooks": [progress_hook],
         "format": selector,
+        # Fix for cloud server format blocks and signature restrictions
+        "extractor_args": {
+            "youtube": {
+                "player-client": ["web", "android"]
+            }
+        },
     }
 
     if COOKIES_PATH.is_file():
