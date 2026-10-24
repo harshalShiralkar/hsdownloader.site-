@@ -1,5 +1,6 @@
 import os
 import re
+import base64
 import shutil
 import tempfile
 import asyncio
@@ -12,7 +13,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
 
-app = FastAPI(title="HSdownloder College Project", version="6.1")
+app = FastAPI(title="HSdownloder College Project", version="7.0")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("hsdownloader")
@@ -20,28 +21,41 @@ logger = logging.getLogger("hsdownloader")
 BASE_DIR = Path(__file__).resolve().parent
 
 # ---------------------------------------------------------------------------
-# Cookies
-# Looks for cookies.txt next to main.py, or the Render "Secret File" location.
+# Settings (all optional, set them as environment variables on Render)
+#   PROXY_URL       e.g. http://user:pass@host:port  (residential proxy)
+#   COOKIES_B64     base64 of your cookies.txt (alternative to Secret Files)
+#   COOKIE_BROWSER  browser name for local use, e.g. firefox
+#   DENO_PATH       custom path to the deno binary
 # ---------------------------------------------------------------------------
+PROXY_URL = os.environ.get("PROXY_URL") or None
+
+COOKIE_BROWSER = os.environ.get("COOKIE_BROWSER") or (
+    None if os.environ.get("RENDER") else "chrome"
+)
+
+# If COOKIES_B64 is set, write it to a file once at startup
+_B64_COOKIE_PATH = Path(tempfile.gettempdir()) / "hs_cookies_from_env.txt"
+if os.environ.get("COOKIES_B64"):
+    try:
+        _B64_COOKIE_PATH.write_bytes(base64.b64decode(os.environ["COOKIES_B64"]))
+    except Exception as exc:
+        logger.warning("Could not decode COOKIES_B64: %s", exc)
+
 COOKIE_FILE_CANDIDATES = [
     BASE_DIR / "cookies.txt",
     Path("/etc/secrets/cookies.txt"),  # Render Secret Files
+    _B64_COOKIE_PATH,
 ]
 
 
 def find_cookies_file():
     for path in COOKIE_FILE_CANDIDATES:
-        if path.is_file() and path.stat().st_size > 0:
-            return path
+        try:
+            if path.is_file() and path.stat().st_size > 0:
+                return path
+        except OSError:
+            continue
     return None
-
-
-# Browser to read cookies from when running on your own PC.
-# On Render there is no browser, so it is disabled automatically.
-# Override with an environment variable: COOKIE_BROWSER=firefox
-COOKIE_BROWSER = os.environ.get("COOKIE_BROWSER") or (
-    None if os.environ.get("RENDER") else "chrome"
-)
 
 
 def get_deno_path():
@@ -129,9 +143,10 @@ def build_ydl_opts(req, temp_dir, use_browser_cookies, stop_event):
         "format": "bestaudio/best" if req.format == "mp3" else "bestvideo+bestaudio/best",
         # Lets yt-dlp fetch the challenge solver if the yt-dlp-ejs package is missing
         "remote_components": ["ejs:github"],
-        # NOTE: no custom player_client here. The old ios/android clients need
-        # PO tokens and do not support cookies, so they cause the bot error.
     }
+
+    if PROXY_URL:
+        opts["proxy"] = PROXY_URL
 
     deno = get_deno_path()
     if deno:
@@ -144,8 +159,7 @@ def build_ydl_opts(req, temp_dir, use_browser_cookies, stop_event):
 
     cookies_file = find_cookies_file()
     if cookies_file:
-        # Copy it, because yt-dlp writes to the cookie file and Render's
-        # secret files are read-only.
+        # Copy it: yt-dlp writes to the cookie file and secret files are read-only.
         cookie_copy = os.path.join(temp_dir, "cookies.txt")
         shutil.copyfile(cookies_file, cookie_copy)
         opts["cookiefile"] = cookie_copy
@@ -208,17 +222,28 @@ def run_download(url, opts, fmt, temp_dir):
 def friendly_error(exc: Exception) -> str:
     """Turn the raw yt-dlp error into a clearer message."""
     text = str(exc)
-    if "not a bot" in text.lower():
+    lowered = text.lower()
+
+    if "not a bot" in lowered or "sign in to confirm" in lowered:
+        if find_cookies_file() and PROXY_URL:
+            return (
+                "YouTube still blocked the request even with cookies and a proxy. "
+                "Export fresh cookies, or try a different residential proxy."
+            )
         if find_cookies_file():
             return (
                 "YouTube blocked this request even with cookies. The cookies may "
-                "have expired, or this server's IP is blocked by YouTube. "
-                "Export fresh cookies and try again."
+                "have expired, or this server's IP is blocked by YouTube. Export "
+                "fresh cookies, or set PROXY_URL to a residential proxy."
             )
         return (
-            "YouTube blocked this request (bot check). No cookies.txt was found "
-            "on the server. Add a valid cookies.txt and try again."
+            "YouTube blocked this request (bot check) and no cookies.txt was "
+            "found on the server. Add a valid cookies.txt and try again."
         )
+
+    if "proxy" in lowered and ("connect" in lowered or "tunnel" in lowered):
+        return "Could not connect through the proxy. Check PROXY_URL."
+
     return text
 
 
@@ -243,6 +268,7 @@ async def health():
         "ffmpeg_available": get_ffmpeg_path() is not None,
         "deno_found": get_deno_path() is not None,
         "cookies_file_found": find_cookies_file() is not None,
+        "proxy_configured": PROXY_URL is not None,
     }
 
 
@@ -302,8 +328,7 @@ async def download_media(
                     )
                 )
 
-                # If loading browser cookies failed, try again WITHOUT them
-                # (previously this `break` stopped the retry from happening).
+                # If loading browser cookies failed, retry WITHOUT them.
                 if use_browser_cookies and cookie_load_error:
                     continue
 
