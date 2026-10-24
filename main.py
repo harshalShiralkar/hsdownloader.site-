@@ -23,7 +23,7 @@ COOKIE_BROWSER = "chrome"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Restrict to your frontend origin in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,6 +105,12 @@ def build_ydl_opts(req, temp_dir, use_cookies, stop_event, selector):
         "windowsfilenames": True,
         "progress_hooks": [progress_hook],
         "format": selector,
+        # Explicitly point yt-dlp to Deno's absolute path on Render
+        "js_runtimes": {
+            "deno": {
+                "path": "/opt/render/.deno/bin/deno"
+            }
+        },
         # Player client configuration for handling cloud IP restrictions
         "extractor_args": {
             "youtube": {
