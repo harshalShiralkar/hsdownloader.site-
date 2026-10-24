@@ -69,25 +69,12 @@ def get_video_height(quality: str) -> int:
     return int(match.group(1)) if match else 720
 
 
-def build_selectors(req):
-    if req.format == "mp3":
-        return ["bestaudio/best"]
-
-    height = get_video_height(req.quality)
-
-    return [
-        f"bestvideo[height<={height}]+bestaudio/"
-        f"best[height<={height}]/bestvideo+bestaudio/best",
-        "bestvideo+bestaudio/best",
-        "best/bestvideo+bestaudio",
-        "best",
-    ]
-
-
-def build_ydl_opts(req, temp_dir, use_cookies, stop_event, selector):
+def build_ydl_opts(req, temp_dir, use_cookies, stop_event):
     def progress_hook(data):
         if stop_event.is_set():
             raise RuntimeError("Download cancelled.")
+
+    height = get_video_height(req.quality)
 
     opts = {
         "outtmpl": os.path.join(
@@ -104,20 +91,24 @@ def build_ydl_opts(req, temp_dir, use_cookies, stop_event, selector):
         "overwrites": True,
         "windowsfilenames": True,
         "progress_hooks": [progress_hook],
-        "format": selector,
-        # Explicitly point yt-dlp to Deno's absolute path on Render
+        # Flexible format selector combined with format_sort prevents errors
+        "format": "bestaudio/best" if req.format == "mp3" else "bestvideo+bestaudio/best",
+        # Explicit Deno JS runtime for challenge solving
         "js_runtimes": {
             "deno": {
                 "path": "/opt/render/.deno/bin/deno"
             }
         },
-        # Player client configuration for handling cloud IP restrictions
+        # Player client rotation for cloud IP stability
         "extractor_args": {
             "youtube": {
                 "player-client": ["ios", "android", "web"]
             }
         },
     }
+
+    if req.format != "mp3":
+        opts["format_sort"] = [f"res:{height}"]
 
     if COOKIES_PATH.is_file():
         cookie_copy = os.path.join(temp_dir, "cookies.txt")
@@ -214,8 +205,6 @@ async def download_media(
     temp_dir = tempfile.mkdtemp(prefix="hsdownloader_")
     stop_event = asyncio.Event()
 
-    selectors = build_selectors(req)
-
     if COOKIES_PATH.is_file():
         cookie_attempts = [False]
     elif COOKIE_BROWSER:
@@ -227,71 +216,58 @@ async def download_media(
         last_error = None
 
         for use_cookies in cookie_attempts:
-            for selector in selectors:
+            if stop_event.is_set():
+                raise RuntimeError("Download cancelled.")
+
+            try:
+                opts = build_ydl_opts(
+                    req,
+                    temp_dir,
+                    use_cookies,
+                    stop_event,
+                )
+
+                filename, title = await asyncio.to_thread(
+                    run_download,
+                    req.url,
+                    opts,
+                    req.format,
+                    temp_dir,
+                )
+
+                if filename and os.path.isfile(filename):
+                    return filename, title
+
+                raise RuntimeError("No output media file was generated.")
+
+            except Exception as exc:
+                last_error = exc
+                message = str(exc).lower()
+
                 if stop_event.is_set():
-                    raise RuntimeError("Download cancelled.")
+                    raise RuntimeError("Download cancelled.") from exc
 
-                try:
-                    opts = build_ydl_opts(
-                        req,
-                        temp_dir,
-                        use_cookies,
-                        stop_event,
-                        selector,
-                    )
+                logger.warning(
+                    "Attempt failed: cookies=%s error=%s",
+                    use_cookies,
+                    exc,
+                )
 
-                    filename, title = await asyncio.to_thread(
-                        run_download,
-                        req.url,
-                        opts,
-                        req.format,
-                        temp_dir,
-                    )
-
-                    if filename and os.path.isfile(filename):
-                        return filename, title
-
-                    raise RuntimeError("No output media file was generated.")
-
-                except Exception as exc:
-                    last_error = exc
-                    message = str(exc).lower()
-
-                    if stop_event.is_set():
-                        raise RuntimeError("Download cancelled.") from exc
-
-                    logger.warning(
-                        "Attempt failed: selector=%s cookies=%s error=%s",
-                        selector,
-                        use_cookies,
-                        exc,
-                    )
-
-                    format_error = any(term in message for term in (
-                        "requested format is not available",
-                        "no video formats found",
-                        "format is not available",
-                        "no formats found",
+                cookie_error = (
+                    "cookie" in message
+                    and any(term in message for term in (
+                        "database", "decrypt", "permission",
+                        "could not", "failed to read",
                     ))
+                )
 
-                    if format_error:
-                        continue
+                if use_cookies and cookie_error:
+                    break
 
-                    cookie_error = (
-                        "cookie" in message
-                        and any(term in message for term in (
-                            "database", "decrypt", "permission",
-                            "could not", "failed to read",
-                        ))
-                    )
-
-                    if use_cookies and cookie_error:
-                        break
-
-                    raise
+                raise
 
         raise RuntimeError(
-            f"All available format attempts failed: {last_error}"
+            f"Download failed: {last_error}"
         )
 
     task = asyncio.create_task(worker())
