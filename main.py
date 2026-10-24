@@ -12,14 +12,51 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
 
-app = FastAPI(title="HSdownloder College Project", version="6.0")
+app = FastAPI(title="HSdownloder College Project", version="6.1")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("hsdownloader")
 
 BASE_DIR = Path(__file__).resolve().parent
-COOKIES_PATH = BASE_DIR / "cookies.txt"
-COOKIE_BROWSER = "chrome"
+
+# ---------------------------------------------------------------------------
+# Cookies
+# Looks for cookies.txt next to main.py, or the Render "Secret File" location.
+# ---------------------------------------------------------------------------
+COOKIE_FILE_CANDIDATES = [
+    BASE_DIR / "cookies.txt",
+    Path("/etc/secrets/cookies.txt"),  # Render Secret Files
+]
+
+
+def find_cookies_file():
+    for path in COOKIE_FILE_CANDIDATES:
+        if path.is_file() and path.stat().st_size > 0:
+            return path
+    return None
+
+
+# Browser to read cookies from when running on your own PC.
+# On Render there is no browser, so it is disabled automatically.
+# Override with an environment variable: COOKIE_BROWSER=firefox
+COOKIE_BROWSER = os.environ.get("COOKIE_BROWSER") or (
+    None if os.environ.get("RENDER") else "chrome"
+)
+
+
+def get_deno_path():
+    """Find the Deno runtime (needed by yt-dlp to solve YouTube challenges)."""
+    candidates = [
+        os.environ.get("DENO_PATH"),
+        str(BASE_DIR / ".deno" / "bin" / "deno"),
+        shutil.which("deno"),
+        "/opt/render/.deno/bin/deno",
+    ]
+    for path in candidates:
+        if path and os.path.isfile(path):
+            return path
+    return None
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -69,7 +106,7 @@ def get_video_height(quality: str) -> int:
     return int(match.group(1)) if match else 720
 
 
-def build_ydl_opts(req, temp_dir, use_cookies, stop_event):
+def build_ydl_opts(req, temp_dir, use_browser_cookies, stop_event):
     def progress_hook(data):
         if stop_event.is_set():
             raise RuntimeError("Download cancelled.")
@@ -77,9 +114,7 @@ def build_ydl_opts(req, temp_dir, use_cookies, stop_event):
     height = get_video_height(req.quality)
 
     opts = {
-        "outtmpl": os.path.join(
-            temp_dir, "%(title).150B [%(id)s].%(ext)s"
-        ),
+        "outtmpl": os.path.join(temp_dir, "%(title).150B [%(id)s].%(ext)s"),
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
@@ -91,30 +126,30 @@ def build_ydl_opts(req, temp_dir, use_cookies, stop_event):
         "overwrites": True,
         "windowsfilenames": True,
         "progress_hooks": [progress_hook],
-        # Flexible format selector combined with format_sort prevents errors
         "format": "bestaudio/best" if req.format == "mp3" else "bestvideo+bestaudio/best",
-        # Explicit Deno JS runtime for challenge solving
-        "js_runtimes": {
-            "deno": {
-                "path": "/opt/render/.deno/bin/deno"
-            }
-        },
-        # Player client rotation for cloud IP stability
-        "extractor_args": {
-            "youtube": {
-                "player-client": ["ios", "android", "web"]
-            }
-        },
+        # Lets yt-dlp fetch the challenge solver if the yt-dlp-ejs package is missing
+        "remote_components": ["ejs:github"],
+        # NOTE: no custom player_client here. The old ios/android clients need
+        # PO tokens and do not support cookies, so they cause the bot error.
     }
+
+    deno = get_deno_path()
+    if deno:
+        opts["js_runtimes"] = {"deno": {"path": deno}}
+    else:
+        logger.warning("Deno not found; YouTube challenge solving may fail.")
 
     if req.format != "mp3":
         opts["format_sort"] = [f"res:{height}"]
 
-    if COOKIES_PATH.is_file():
+    cookies_file = find_cookies_file()
+    if cookies_file:
+        # Copy it, because yt-dlp writes to the cookie file and Render's
+        # secret files are read-only.
         cookie_copy = os.path.join(temp_dir, "cookies.txt")
-        shutil.copyfile(COOKIES_PATH, cookie_copy)
+        shutil.copyfile(cookies_file, cookie_copy)
         opts["cookiefile"] = cookie_copy
-    elif use_cookies:
+    elif use_browser_cookies and COOKIE_BROWSER:
         opts["cookiesfrombrowser"] = (COOKIE_BROWSER,)
 
     ffmpeg_path = get_ffmpeg_path()
@@ -146,16 +181,12 @@ def run_download(url, opts, fmt, temp_dir):
     video_id = info.get("id") or ""
 
     extensions = (
-        (".mp3",)
-        if fmt == "mp3"
-        else (".mp4", ".mkv", ".webm", ".mov")
+        (".mp3",) if fmt == "mp3" else (".mp4", ".mkv", ".webm", ".mov")
     )
 
     candidates = []
-
     for name in os.listdir(temp_dir):
         path = os.path.join(temp_dir, name)
-
         if (
             os.path.isfile(path)
             and name.lower().endswith(extensions)
@@ -172,6 +203,23 @@ def run_download(url, opts, fmt, temp_dir):
         return max(candidates, key=os.path.getsize), title
 
     return None, title
+
+
+def friendly_error(exc: Exception) -> str:
+    """Turn the raw yt-dlp error into a clearer message."""
+    text = str(exc)
+    if "not a bot" in text.lower():
+        if find_cookies_file():
+            return (
+                "YouTube blocked this request even with cookies. The cookies may "
+                "have expired, or this server's IP is blocked by YouTube. "
+                "Export fresh cookies and try again."
+            )
+        return (
+            "YouTube blocked this request (bot check). No cookies.txt was found "
+            "on the server. Add a valid cookies.txt and try again."
+        )
+    return text
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -193,6 +241,8 @@ async def health():
         "status": "ok",
         "yt_dlp_version": yt_dlp.version.__version__,
         "ffmpeg_available": get_ffmpeg_path() is not None,
+        "deno_found": get_deno_path() is not None,
+        "cookies_file_found": find_cookies_file() is not None,
     }
 
 
@@ -205,7 +255,7 @@ async def download_media(
     temp_dir = tempfile.mkdtemp(prefix="hsdownloader_")
     stop_event = asyncio.Event()
 
-    if COOKIES_PATH.is_file():
+    if find_cookies_file():
         cookie_attempts = [False]
     elif COOKIE_BROWSER:
         cookie_attempts = [True, False]
@@ -215,24 +265,15 @@ async def download_media(
     async def worker():
         last_error = None
 
-        for use_cookies in cookie_attempts:
+        for use_browser_cookies in cookie_attempts:
             if stop_event.is_set():
                 raise RuntimeError("Download cancelled.")
 
             try:
-                opts = build_ydl_opts(
-                    req,
-                    temp_dir,
-                    use_cookies,
-                    stop_event,
-                )
+                opts = build_ydl_opts(req, temp_dir, use_browser_cookies, stop_event)
 
                 filename, title = await asyncio.to_thread(
-                    run_download,
-                    req.url,
-                    opts,
-                    req.format,
-                    temp_dir,
+                    run_download, req.url, opts, req.format, temp_dir
                 )
 
                 if filename and os.path.isfile(filename):
@@ -248,27 +289,27 @@ async def download_media(
                     raise RuntimeError("Download cancelled.") from exc
 
                 logger.warning(
-                    "Attempt failed: cookies=%s error=%s",
-                    use_cookies,
+                    "Attempt failed: browser_cookies=%s error=%s",
+                    use_browser_cookies,
                     exc,
                 )
 
-                cookie_error = (
-                    "cookie" in message
-                    and any(term in message for term in (
+                cookie_load_error = "cookie" in message and any(
+                    term in message
+                    for term in (
                         "database", "decrypt", "permission",
-                        "could not", "failed to read",
-                    ))
+                        "could not", "failed to read", "find",
+                    )
                 )
 
-                if use_cookies and cookie_error:
-                    break
+                # If loading browser cookies failed, try again WITHOUT them
+                # (previously this `break` stopped the retry from happening).
+                if use_browser_cookies and cookie_load_error:
+                    continue
 
                 raise
 
-        raise RuntimeError(
-            f"Download failed: {last_error}"
-        )
+        raise RuntimeError(f"Download failed: {last_error}")
 
     task = asyncio.create_task(worker())
 
@@ -306,7 +347,7 @@ async def download_media(
         logger.exception("Download failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Download error: {exc}",
+            detail=f"Download error: {friendly_error(exc)}",
         )
 
     if not filename or not os.path.isfile(filename):
@@ -317,9 +358,7 @@ async def download_media(
         )
 
     safe_title = re.sub(
-        r'[<>:"/\\|?*\x00-\x1f]',
-        "_",
-        title,
+        r'[<>:"/\\|?*\x00-\x1f]', "_", title
     ).strip(" .")[:180] or "media"
 
     extension = os.path.splitext(filename)[1].lower()
@@ -337,21 +376,13 @@ async def download_media(
     return FileResponse(
         path=filename,
         filename=f"{safe_title}{extension}",
-        media_type=media_types.get(
-            extension, "application/octet-stream"
-        ),
+        media_type=media_types.get(extension, "application/octet-stream"),
         background=background_tasks,
     )
 
 
-# --- RENDER DEPLOYMENT CONFIGURATION ---
 if __name__ == "__main__":
     import uvicorn
 
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=port,
-        reload=False,
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
