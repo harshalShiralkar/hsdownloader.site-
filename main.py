@@ -75,10 +75,12 @@ def build_selectors(req):
 
     height = get_video_height(req.quality)
 
+    # Updated with resilient fallbacks to prevent format errors
     return [
         f"bestvideo[height<={height}]+bestaudio/"
         f"best[height<={height}]/bestvideo+bestaudio/best",
         "bestvideo+bestaudio/best",
+        "best/bestvideo+bestaudio",
         "best",
     ]
 
